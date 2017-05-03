@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta Content-Type
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Intro to Robotics Programming: Part 4 | Clinton Liddick</title>
+
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css"
+          rel="stylesheet" type="text/css">
+    <link href="/static/css/prism.css" rel="stylesheet" type="text/css">
+    <link href="/static/css/style.css" rel="stylesheet" type="text/css">
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+
+    <!-- Begin site header -->
+    <header>
+      <nav class="navbar navbar-inverse navbar-static-top" role="navigation">
+        <div class="container-fluid">
+          <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed"
+                    data-toggle="collapse" data-target=".navbar-collapse">
+              <span class="sr-only">Toggle navigation</span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">
+              Clinton Liddick <small>Technology is for Humans</small></a>
+          </div>
+          <div class="navbar-collapse collapse">
+            <ul class="nav navbar-nav">
+              
+              <li >
+                <a href="/">Home</a>
+              </li>
+              
+              <li >
+                <a href="/about/">About</a>
+              </li>
+              
+              <li class="active">
+                <a href="/articles/">Articles</a>
+              </li>
+              
+              <li >
+                <a href="/projects/">Projects</a>
+              </li>
+              
+              <li >
+                <a href="/contact/">Contact</a>
+              </li>
+              
+            </ul>
+            <!-- <form class="navbar-form navbar-right" role="search" action="">
+                 <div class="form-group has-feedback">
+                 <input type="text" class="form-control" placeholder="Search" />
+                 <span class="glyphicon glyphicon-search form-control-feedback"></span>
+                 </div>
+                 </form> -->
+          </div>
+        </div>
+      </nav>
+    </header>
+    <!-- End site header -->
+
+    
+
+<div class="container">
+
+  <div class="row">
+    <div class="col-xs-12">
+      <div class="page-header">
+        <h1>Intro to Robotics Programming: Part 4</h1>
+      </div>
+      <h3><small>Posted: March 30, 2016</small></h3>
+      <br>
+    </div>
+  </div>
+
+  <p>
+<script type="math/tex; mode=display">
+% set vector style for entire page
+\renewcommand{\vec}[1]{\mathbf{#1}}
+</script>
+</p>
+<h3>Autonomy</h3>
+<p>When we think of robots, we don't usually think of remote controlled cars.
+We imaging Rosie from the Jetsons, or R2-D2: highly capable autonomous systems.
+While real robots are still far from that level of functionality, they do operate with some autonomy.
+Quadcopters automatically turn simple up/down/left/right joystick input into four motor torques.
+Robots in labs detect objects around them and plan a base motion and torques for seven arm joints
+to move into place to grasp an object at an appropriate angle.</p>
+<p>We'll start with the simplest algorithm for navigation planning of a differential drive mobile robot.</p>
+<h3>Turn and Go</h3>
+<p>What is the simplest set of instructions you could give to a blindfolded person to get them from where they are to some other spot?
+If the point is behind them, we might say something like "turn around, and take four steps forward."
+We're going to code up this simple algorithm which I call "turn and go."</p>
+<h4>The Math</h4>
+<p>The study of algorithms, and of computer science, is of converting some process into precise rules and instructions
+that any "processing machine" may "execute" them correctly.</p>
+<blockquote>
+<p>Every computer program is a model, hatched in the mind, of a real or mental process.
+These processes, arising from human experience and thought, are huge in number, intricate in detail,
+and at any time only partially understood....</p>
+<p>For all its power, the computer is a harsh taskmaster.
+Its programs must be correct, and what we wish to say must be said accurately in every detail.</p>
+<p><cite>Alan J. Perlis - Forward to <a href="https://mitpress.mit.edu/sicp/">Structure and Interpretation of Computer Programs</a></cite></p>
+</blockquote>
+<p>To that end, how can we exactly encode a set of instructions like "turn towards the goal" and "move forward three meters"?
+Again, we turn to mathematics for an exact model of angular and linear distance.</p>
+<p>If we are currently at a point <em>start</em>, and want to move to point <em>goal</em>, we need to know two things:
+how far to move, and in what direction?
+If we setup the problem as shown below, that means we want to find <script type="math/tex">|\vec{v}|</script> and <script type="math/tex">\theta</script>.</p>
+<p><img alt="right triangle" src="/static/img/robotics/trig2.png" class="img-responsive center-block"></p>
+<p>A great but sometimes confusing thing about how we represent our state using linear algebra,
+is that vectors and points are equivalent.
+In other words, <script type="math/tex">(1,1)</script> is both a vector from <script type="math/tex">(0,0)</script> to <script type="math/tex">(1,1)</script>, and the point <script type="math/tex">(1,1)</script>.
+So any point can be treated as a vector.
+Delving a bit into linear algebra, we know that subtracting vector <script type="math/tex">\vec{b}</script> from <script type="math/tex">\vec{a}</script>
+yields a vector from the "head" of <script type="math/tex">\vec{a}</script> to the head of <script type="math/tex">\vec{b}</script>.
+Since points are vectors, <script type="math/tex">\vec{v}</script> is found by simply subtracting <em>start</em> from <em>goal</em>.
+And <script type="math/tex">\vec{v}</script> will have the <script type="math/tex">x</script> and <script type="math/tex">y</script> components we expect from any point or vector in the space,
+and necessary to do our trigonometric calculations.</p>
+<p>
+<script type="math/tex; mode=display">
+\begin{align}
+\vec{v} &= \vec{goal} - \vec{start}
+\end{align}
+</script>
+</p>
+<p>Given our knowledge of trigonometry, we can solve for <script type="math/tex">\theta</script>
+<sup id="fnref:1"><a class="footnote-ref" href="#fn:1" rel="footnote">1</a></sup>:</p>
+<p>
+<script type="math/tex; mode=display">
+\begin{align}
+\tan(\theta) &= \frac{y}{x} \\
+\theta       &= \arctan(\frac{y}{x}) \\
+\end{align}
+</script>
+</p>
+<p>And by definition we know the magnitude of a vector, <script type="math/tex">|\vec{v}|</script>:</p>
+<p>
+<script type="math/tex; mode=display">
+\begin{align}
+&|\vec{v}|^2  = x^2 + y^2 \\
+&|\vec{v}|    = \sqrt{x^2 + y^2} \\
+\end{align}
+</script>
+</p>
+<p>So, with our desired heading and travel distance,
+we can start to think about how we want to communicate this information with or robot.</p>
+<h3>Control</h3>
+<p>Control systems are divided into many layers.
+First, at the lowest level, are the capabilities of the machine.
+Our little diff-drive robot in reality would have two control inputs, the electrical current to each wheel.
+Woah, that's pretty far from autonomous navigation!</p>
+<p>Our simulated bot doesn't have an electrical system however, and doesn't even have wheels.
+So what do those electrical signals provide at a motion level?
+If both wheels move the same direction at the same speed, we move forward or backward in a straight line.
+If we cause the wheels to turn at different speeds, the robot will turn (hence differential drive).
+We could measure the movement of the wheels in terms of torque, but we probably want an interface
+that accepts velocity commands.
+So, at the lowest level we'll consider, the robot accepts linear and rotational velocity commands.</p>
+<p>Roboticists use <a href="https://en.wikipedia.org/wiki/Screw_theory">Screw Theory</a> to define and describe rigid body kinematics.
+Screw Theory defines a concept called a <strong>Twist</strong> that represents the velocity of a rigid body as a
+rotational velocity around an axis, and a linear velocity along that axis.
+We'll use a simplified Twist to represent the velocities our robot will execute.</p>
+<p>Let's look at some code.</p>
+<p>First, we'll define the types we'll need:</p>
+<pre><code class="language-python">class Vector(object):
+    def __init__(self, x=0, y=0):
+        self.x = x
+        self.y = y
+
+class Twist(object):
+    &quot;&quot;&quot;2D motion described by velocity components
+
+    :ivar roboticsintro.common.Vector linear: linear components (along x and y-axes) of twist
+    :ivar float angular: angular component of twist (rotation around z-axis)
+    &quot;&quot;&quot;
+    def __init__(self, x=0., y=0., theta=0.):
+        self.linear = Vector(x, y)
+        self.angular = theta
+</code></pre>
+
+<p>And now, a single control step for our robot (in our newly-refactored <code>DiffDriveBot</code> class):</p>
+<pre><code class="language-python">class DiffDriveBot(object):
+    # ...snip...
+
+    def set_command(self, twist):
+        &quot;&quot;&quot;Set robot velocity command.
+
+        :param twist: command to send
+        :type twist: roboticsintro.common.Twist
+        &quot;&quot;&quot;
+        if twist is None:
+            raise ValueError(&quot;Command may not be null. Set zero velocities instead.&quot;)
+        if twist.linear.y != 0.:
+            raise ValueError(&quot;DiffDriveBot cannot move sideways. twist.linear.y must be 0.&quot;)
+        self._command = twist
+
+    def control_step(self, dt):
+        &quot;&quot;&quot;Execute one control step for robot.
+
+        control_step should be called regularly and at high frequency
+        to ensure propper execution.
+
+        :param dt: time since last control step execution
+        :type dt: float
+        &quot;&quot;&quot;
+        speed = self._command.linear.x
+        normalized_heading = normalize_angle(self.body.angle)
+        velocity = unit_direction_vector(normalized_heading) * speed
+
+        self.body.velocity.x = velocity.x
+        self.body.velocity.y = velocity.y
+        self.body.angular_velocity = self._command.angular
+</code></pre>
+
+<p>We recognized last time that our robot cannot move sideways, and we now encode that in its controller.
+This type of <strong>constraint</strong> is called <strong>non-holonomic</strong>, because it cannot be described
+by only the position at a specific time (like hitting a person when they are standing somewhere).
+Instead, the constraint is on the <em>velocity</em> of the robot.
+But wait, why do we explicitly reject any y-axis velocity components, and then turn around and
+calculate x and y-axis velocities for the body?
+Well, there are two things at work here, one fundamental and one coincidental.</p>
+<p>Fundamentally, when we talk about position, say <script type="math/tex">(x,y)</script>, we must know or define the <strong>origin</strong> of
+the coordinate system for the position to have any meaning.
+These origins are known as <strong>frames</strong>.
+You can <strong>transform</strong> coordinates in one frame to another, as long as you know the coordinates of one's origin in the other frame.
+Every object has a <strong>local frame</strong> or <strong>body frame</strong> that is fixed to it.
+Our robot's local frame is <script type="math/tex">(0,0)</script> at his physical center, with "forward" arbitrarily defined to be in the positive x direction.
+The <strong>world frame</strong> (in our case, <script type="math/tex">(0,0)</script> at the bottom left of the window) is where we do many of our calculations,
+since it is a convenient choice to transform multiple objects into and work on them all together.</p>
+<p>Inconveniently, a body's velocity in <code>pymunk</code> is specified in world-frame coordinates.
+So, in our code, we will calculate a heading and direction between two world-frame coordinates,
+calculate a command in the robot's local-frame, and then the robot must set its own velocity in world-frame.
+Yuck. Fifty percent of robotics is mucking around with transforms.
+However, in a real system, the control loop code would be sending hardware commands rather than doing a weird transform.</p>
+<h3>Planning</h3>
+<p>Our controller is fairly simple; it just takes commands and directly executes them.
+A control loop has to be fast, so we must usually offload more intensive or long-running tasks to other threads or processes.
+Planning <strong>what</strong> action to take or <strong>how</strong> to take an action is often one of those tasks.
+In our case, we want to plan an appropriate set of motions from the <em>start</em> to <em>goal</em> positions,
+and then turn that plan into commands the robot can execute.</p>
+<p>With a little forethought, we can be good software engineers and separate the planner
+from the execution by deciding on a generic language the two can communicate in.
+Since we're trying to move through space, let's describe the <strong>path</strong> the robot must take,
+and leave the details of how to execute that path to another module.
+A <strong>path</strong> is an ordered series of <strong>poses</strong> or <strong>configurations</strong>.
+There is no information regarding velocity, or any details of execution.</p>
+<p>Let's see the representations in code:</p>
+<pre><code class="language-python">class Pose(object):
+    def __init__(self, x, y, theta):
+        self.position = Vector(x, y)
+        self.orientation = theta
+
+class Path(object):
+    def __init__(self, poses=[]):
+        self._poses = deque(poses)
+
+    def length(self):
+        return len(self._poses)
+
+    def append_pose(self, pose):
+        if pose is not None:
+            self._poses.append(pose)
+
+    def next_pose(self):
+        return self._poses.popleft()
+</code></pre>
+
+<p>A pose represents a full configuration of our mobile robot, and a path is just a series of poses.</p>
+<p>Now, let's see how we can generate a path based on our previous math.</p>
+<pre><code class="language-python">def turn_and_go_path(start, goal,
+                     positional_tolerance=1e-9,
+                     angular_tolerance=1e-9):
+    &quot;&quot;&quot;Find a straight-line path from start to goal.
+
+    Find a path from start to goal consisting of a single rotation,
+    a straight line, and a final rotation to match goal orientation
+    if it is not None.
+
+    :param start: starting pose
+    :type  start: roboticsintro.common.Pose
+    :param goal: goal pose to find path to
+    :type  goal: roboticsintro.common.Pose
+    :param positional_tolerance: how close two points must be to be considered equal
+    :type positional_tolerance: float
+    :param angular_tolerance: how close two angles must be to be considered equal
+    :type angular_tolerance: float
+    :returns: path from start to goal or empty path if goal is at start
+    :rtype: roboticsintro.common.Path
+    &quot;&quot;&quot;
+    path = Path()
+
+    dir_x, dir_y = (goal.position.x - start.position.x,
+                    goal.position.y - start.position.y)
+    heading_theta = atan2(dir_y, dir_x)
+
+    if goal.orientation is None:
+        goal.orientation = heading_theta
+
+    # check we're not already at the goal
+    if not allclose(start.position, goal.position,
+                    abs_tol=positional_tolerance):
+        # check if we're already on the correct heading
+        if not isclose(start.orientation, heading_theta,
+                       abs_tol=angular_tolerance):
+            # first rotation part of plan
+            path.append_pose(Pose(x=start.position.x,
+                                  y=start.position.y,
+                                  theta=heading_theta))
+
+        # linear travel part of plan
+        path.append_pose(Pose(x=goal.position.x,
+                              y=goal.position.y,
+                              theta=heading_theta))
+
+    # check if we will already be at goal orientation
+    if not isclose(heading_theta, goal.orientation,
+                   abs_tol=angular_tolerance):
+        # final rotation part of plan
+        path.append_pose(Pose(x=goal.position.x,
+                              y=goal.position.y,
+                              theta=goal.orientation))
+
+    return path
+</code></pre>
+
+<p>Pretty straightforward.
+First pose is pointing in a direction.
+Next is at the goal position, the only <strong>waypoint</strong> we care about or need for our kind of motion.
+Finally, another rotation to fully specify the final pose.
+This may seem like an overly simplistic algorithm, but it is actually <strong>optimal</strong><sup id="fnref:2"><a class="footnote-ref" href="#fn:2" rel="footnote">2</a></sup> in terms of shortest path length!
+It is just a straight line after all.</p>
+<p>Now that we have our plan, how to convert the path into specific velocity commands
+our robot can execute?</p>
+<pre><code class="language-python">def compute_command(dt):
+    global current_pose_target
+    global path_start
+
+    # set next waypoint as goal if available
+    if current_pose_target is None:
+        robot.stop()
+        if current_plan.length() &gt; 0:
+            current_pose_target = current_plan.next_pose()
+            path_start = robot.get_pose()
+        return
+
+    command = Twist()
+    curr_pose = robot.get_pose()
+
+    # calculate linear distance left to travel
+    displacement = Vector(current_pose_target.position.x - curr_pose.position.x,
+                            current_pose_target.position.y - curr_pose.position.y)
+    at_x = isclose(displacement.x, 0., abs_tol=LINEAR_TOLERANCE)
+    at_y = isclose(displacement.y, 0., abs_tol=LINEAR_TOLERANCE)
+
+    # normalize current and goal angles and determine if already at heading
+    curr_theta_normalized = normalize_angle(curr_pose.orientation)
+    goal_theta_normalized = normalize_angle(current_pose_target.orientation)
+    at_orientation = isclose(curr_theta_normalized, goal_theta_normalized, abs_tol=ANGULAR_TOLERANCE)
+
+    if at_x and at_y and at_orientation:
+        # at goal so stop moving
+        robot.stop()
+        # wait for next goal
+        current_pose_target = None
+    else:
+        # set linear part of command in robot's local frame if not at goal
+        if at_x and at_y:
+            command.linear.x = 0.
+        else:
+            # DiffDriveBot only moves linearly in x
+            command.linear.x = LINEAR_SPEED
+
+        # set angular part of command if not at goal
+        if at_orientation:
+            command.angular = 0.
+        else:
+            theta_delta = 0
+            # determine which direction to turn such that shortest turn is necessary
+            if goal_theta_normalized &gt; curr_theta_normalized:
+                theta_delta = goal_theta_normalized - curr_theta_normalized
+                command.angular = ANGULAR_VELOCITY if theta_delta &lt; pi else -ANGULAR_VELOCITY
+            else:
+                theta_delta = curr_theta_normalized - goal_theta_normalized
+                command.angular = ANGULAR_VELOCITY if theta_delta &gt; pi else -ANGULAR_VELOCITY
+
+        # send command to robot
+        robot.set_command(command)
+</code></pre>
+
+<p>Pretty long, but let's take a closer look.
+The first part is just getting the next part of the plan.
+We then do the linear calculations, allowing some tolerance because while the world may be continuous,
+our control cycles are still discrete and we may miss hitting our target if we don't happen to run
+at exactly the right time.
+When calculating the angles, we normalize them to put them in the open set <script type="math/tex">[0,2\pi)</script>
+(since they are not guaranteed to be there) so we can easily compare and work with them.
+Again, the angles are tested for equality to within some tolerance.
+If the next target pose is a rotation or translation away we command the robot with simple velocities
+to move toward the target.</p>
+<p>Note that this target to command calculation is assuming the plan has been constructed
+such that this simplistic function will work correctly (i.e., the waypoints are each independent rotation
+or translation only).
+If we created a waypoint that was both a rotation and translation away from our current position,
+we would spiral outward and likely miss our target completely.
+We would need a more complex system of determining commands from paths to handle such plans.</p>
+<h3>Tying it All Together</h3>
+<p>So where do we call our planner?
+Let's take a goal as input from the user, do the planning, and inform the controller.</p>
+<pre><code class="language-python">@window.event
+def on_mouse_press(x, y, button, mod):
+    global current_plan
+    global current_pose_target
+
+    start = robot.get_pose()
+    goal = Pose(x=x, y=y, theta=None)
+    current_plan = turn_and_go_path(start, goal,
+                                    LINEAR_TOLERANCE, ANGULAR_TOLERANCE)
+    current_pose_target = None
+</code></pre>
+
+<p>If you have taste, you'll notice my yucky use of global variables in these functions.
+What's up with that Clint? I trusted you!
+Well, it's intentional for a lesson.</p>
+<p>Most often, different parts of the controller are running in loops in multiple threads,
+and need to share state between them.
+The practical way to do this is with locks (mutexes) around shared memory
+(although for realtime applications you need to do so with non-blocking operations, or rely on atomic operations).
+We don't have multiple threads running for our controller,
+but we have independent loops with <code>pyglet.clock.schedule_interval</code>,
+so I maintain this common idiom for passing data, while ignoring locks for simplicity (and because we don't need them).</p>
+<h3>The Painful Truth</h3>
+<p>If you play with the full implementation, you'll notice that for very long paths,
+sometimes the robot misses its goal and keeps on going!
+How would that happen?
+I specified a tolerance for angular "equality," meaning that we might set off on a heading
+that is slightly off from what was calculated in the plan.
+Over a great distance, we begin to diverge more and more significantly from the expected path,
+and may miss our goal position by more than our positional equality tolerance.</p>
+<p>What if we make the angular tolerance smaller to reduce this effect?
+Then, because we only run our control loop at a certain interval,
+we may pass that very narrow window in between checks.
+Why not reduce the robot's speed to decrease the chances it misses the target?
+Because that's lame. We'd all get impatient and curse robotics for a boring reason,
+when there are much more interesting reasons to curse robotics.
+Could we run the control loop faster?
+In this case yes, but there will be a limit, so there is always the possibility of mistakes at certain speeds.</p>
+<p>The fact is, robotics is hard.
+Information is never perfect, and hardware isn't infinitely precise or fast.
+To make reliable systems you need to think carefully that your algorithms handle all possible cases well,
+reduce uncertainty with planning and multiple independent sources of information,
+and painstakingly tune and test the entire system to your required specs.</p>
+<h3>Overview</h3>
+<p>Our robot is now autonomous.
+We have a motion controller and planner, and a high-level command interface.
+And along the way we learned that robotics is fundamentally difficult.
+But our empty 2D world is a far cry from reality,
+and even our simple system is missing one key component.
+Collision detection.</p>
+<p>In the next few articles we will study the basics of collision detection,
+and implement a framework that will not only allow us to avoid hitting things,
+but also plan to avoid obstacles and still reach our goal.</p>
+<p>The complete code for this article can be found in (or included from)
+<a href="https://github.com/ClintLiddick/robotics_intro/blob/master/roboticsintro/hellorobot/pointclick.py">https://github.com/ClintLiddick/robotics_intro/blob/master/roboticsintro/hellorobot/pointclick.py</a>.</p>
+<p class="text-right"><strong>Next article</strong>: coming soon!</p>
+
+<h4>Notes</h4>
+<div class="footnote">
+<hr />
+<ol>
+<li id="fn:1">
+<p>
+<script type="math/tex">\arctan(\frac{y}{x})</script> won't give us the results we want depending on which quadrant our vector lies in.
+Fortunately, many languages provide the <code>atan2</code> funciton, which properly accounts for negative numbers and returns appropriate angles.&#160;<a class="footnote-backref" href="#fnref:1" rev="footnote" title="Jump back to footnote 1 in the text">&#8617;</a></p>
+</li>
+<li id="fn:2">
+<p>It is actually a special case of <a href="http://planning.cs.uiuc.edu/node821.html">Dubin's Curves</a> where the minimum turning radius is 0.
+See <a href="https://gieseanw.wordpress.com/2012/10/21/a-comprehensive-step-by-step-tutorial-to-computing-dubins-paths/">this article</a> for implementation details.&#160;<a class="footnote-backref" href="#fnref:2" rev="footnote" title="Jump back to footnote 2 in the text">&#8617;</a></p>
+</li>
+</ol>
+</div>
+
+</div>
+
+
+
+    <!-- Begin page footer -->
+    <footer class="footer">
+      <div class="container-fluid">
+        <div class="text-muted">
+          <p>&copy; Copyright 2016 Clinton Liddick. All rights reserved.</p>
+          <p>Special thanks to <a href="http://getbootstrap.com">Bootstrap</a>
+            and <a href="http://glyphicons.com">Glyphicons</a>.</p>
+        </div>
+      </div>
+    </footer>
+    <!-- End page footer -->
+
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"
+            type="application/javascript"></script>
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"
+            type="application/javascript"></script>
+
+    <!-- LaTeX math formatting -->
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Config({
+        jax: ["input/TeX", "output/CommonHTML", "output/PlainSource"],
+        extensions: ["tex2jax.js"],
+        TeX: {
+          extensions: ["AMSmath.js", "AMSsymbols.js"]
+        }
+      });
+    </script>
+    <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js"
+            type="application/javascript"></script>
+
+    <!-- Code highlighting -->
+    <script type="application/javascript">
+      $("code").addClass("line-numbers")
+      $(".language-bash").removeClass("line-numbers").addClass("command-line")
+    </script>
+    <script src="/static/js/prism.min.js"
+            type="application/javascript"></script>
+
+    <!-- Google Analytics snippet -->
+    <script type="application/javascript">
+     (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+         (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+     m=s.getElementsByTagName(o)[0];
+     a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+     })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+     ga('create', 'UA-46719658-2', 'auto');
+     ga('send', 'pageview');
+
+    </script>
+  </body>
+</html>

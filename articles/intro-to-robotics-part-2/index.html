@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta Content-Type
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Intro to Robotics Programming: Part 2 | Clinton Liddick</title>
+
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css"
+          rel="stylesheet" type="text/css">
+    <link href="/static/css/prism.css" rel="stylesheet" type="text/css">
+    <link href="/static/css/style.css" rel="stylesheet" type="text/css">
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+
+    <!-- Begin site header -->
+    <header>
+      <nav class="navbar navbar-inverse navbar-static-top" role="navigation">
+        <div class="container-fluid">
+          <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed"
+                    data-toggle="collapse" data-target=".navbar-collapse">
+              <span class="sr-only">Toggle navigation</span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">
+              Clinton Liddick <small>Technology is for Humans</small></a>
+          </div>
+          <div class="navbar-collapse collapse">
+            <ul class="nav navbar-nav">
+              
+              <li >
+                <a href="/">Home</a>
+              </li>
+              
+              <li >
+                <a href="/about/">About</a>
+              </li>
+              
+              <li class="active">
+                <a href="/articles/">Articles</a>
+              </li>
+              
+              <li >
+                <a href="/projects/">Projects</a>
+              </li>
+              
+              <li >
+                <a href="/contact/">Contact</a>
+              </li>
+              
+            </ul>
+            <!-- <form class="navbar-form navbar-right" role="search" action="">
+                 <div class="form-group has-feedback">
+                 <input type="text" class="form-control" placeholder="Search" />
+                 <span class="glyphicon glyphicon-search form-control-feedback"></span>
+                 </div>
+                 </form> -->
+          </div>
+        </div>
+      </nav>
+    </header>
+    <!-- End site header -->
+
+    
+
+<div class="container">
+
+  <div class="row">
+    <div class="col-xs-12">
+      <div class="page-header">
+        <h1>Intro to Robotics Programming: Part 2</h1>
+      </div>
+      <h3><small>Posted: March 21, 2016</small></h3>
+      <br>
+    </div>
+  </div>
+
+  <h3>Getting Setup</h3>
+<p>Meet Rob.</p>
+<p><img alt="Rob the robot" class="img-responsive" src="/static/img/robotics/rob.png"></p>
+<p>Rob is a member of the mobile robot family. In the two dimensional world we will create, he is free to move in any direction.
+Rob won't be the only robot we meet on our journey, but he'll be our first. Let's help him get moving.</p>
+<h4>Python</h4>
+<p>If you're on Linux, you already have Python and so are just about ready to go.
+I highly recommend the use of <a href="https://pip.pypa.io/en/stable/">pip</a> and
+<a href="https://virtualenvwrapper.readthedocs.org/en/latest/">virtualenvwrapper</a> to manage package installation,
+but choose any work-flow that works for you.</p>
+<p>You can install all the required Python packages you'll need by downloading
+<a href="https://raw.githubusercontent.com/ClintLiddick/robotics_intro/master/requirements.txt">this requirements file</a>
+and running:</p>
+<pre><code class="language-bash">mkvirtualenv robotics_intro_env
+pip install -r requirements.txt
+</code></pre>
+
+<p>And that's it, we're ready to get coding!</p>
+<h3>Hello Rob(ot)</h3>
+<p>Let's get Rob up and running. Throughout this series we'll use the <a href="https://pymunk.readthedocs.org/en/latest/index.html">pymunk</a>
+library, a wrapper for <a href="http://chipmunk-physics.net/">Chipmunk</a> for our <strong>world</strong> and <strong>object</strong> representation,
+as well as collision detection and joint modeling.
+There are several components to most robot models. Chipmunk sums it up nicely:</p>
+<blockquote>
+<ul>
+<li><strong>Rigid Bodies</strong>: A rigid body holds the physical properties of an object. (mass, position, rotation, velocity, etc.)
+  It does not have a shape until you attach one or more collision shapes to it. If you’ve done physics with
+  particles before, rigid bodies differ in that they are able to rotate. Rigid bodies generally tend to have
+  a 1:1 correlation to sprites in a game. You should structure your game so that you use the position and
+  rotation of the rigid body for drawing your sprite.</li>
+<li><strong>Collision Shapes</strong>: By attaching shapes to bodies, you can define the a body’s shape. You can attach as many
+  shapes to a single body as you need to in order to define a complex shape. Shapes contain the surface
+  properties of an object such as how much friction or elasticity it has.</li>
+<li><strong>Constraints/Joints</strong>: Constraints and joints describe how bodies are attached to each other.</li>
+<li><strong>Spaces</strong>: Spaces are containers for simulating objects in Chipmunk. You add bodies, shapes
+  and joints to a space and then update the space as a whole. They control how all the rigid
+  bodies, shapes, and constraints interact together.</li>
+</ul>
+<p>-- <cite><a href="http://chipmunk-physics.net/release/ChipmunkLatest-Docs/#Basics-Overview">Chipmunk Documentation</a></cite></p>
+</blockquote>
+<p>All robot models contain the same basic components: physical properties, shape, and joints (generically called constraints).
+And we must usually put them into some container.
+We'll come back to joints later, but Rob doesn't really need one, so let's start with just a body and shape.
+Take note that although I refer to physical units (meters and kilograms), Chipmunk actually doesn't care what units we use.
+As long as you are consistent, you will get consistent and correct results that you can treat however you like.
+This allows us to define a meters-to-pixels conversion, and use it directly in our robot body,
+again simplifying our display code.</p>
+<pre><code class="language-python">import pymunk
+
+# constant for converting physical units to pixels
+M_TO_PIXELS = 200
+
+# build Rob the robot
+rob_mass = 1  # 1 kg
+rob_radius = 0.1 * M_TO_PIXELS  # 0.1 meter radius, converted to pixels for later display
+rob_I = pymunk.moment_for_circle(rob_mass, 0, rob_radius)  # moment of inertia for disk
+rob_body = pymunk.Body(rob_mass, rob_I)
+rob_body.position = 300, 300  # (x, y)
+rob_shape = pymunk.Circle(rob_body, rob_radius)
+</code></pre>
+
+<p>That's it! Not very exciting, since we still can't see him yet. The second library we'll make great use of is
+<a href="https://pyglet.readthedocs.org/en/pyglet-1.2-maintenance/">pyglet</a>, a fantastic Python wrapper for OpenGL.
+OpenGL is an absolute nightmare to use directly, but <code>pyglet</code> makes it much easier, and there is even a
+convenient <code>pymunk.pyglet_util</code> library as well! However, we still have some setting up to do.</p>
+<pre><code class="language-python"># setup context
+window = pyglet.window.Window(width=600, height=600, visible=False)
+
+# define visualization
+@window.event
+def on_draw():
+    # always clear and redraw for graphics programming
+    window.clear()
+    pymunk.pyglet_util.draw(rob_shape)  # this is gold right here
+</code></pre>
+
+<p>We first create a <code>window</code> object which creates the OpenGL context for us, but set it to <code>visible=False</code> so it doesn't
+display before we finish defining our application.
+Next, we create a <code>pyglet</code> event handler by using the <code>event</code> annotation on <code>window</code>, and the function name <code>on_draw</code>
+indicates to run this function when, you guessed it, drawing.
+As with any graphics programming, we want to clear the display buffer first, and then do all of our drawing at once.
+We're going to get a lot of mileage out of <code>pymunk.pyglet_util.draw()</code>, as it saves us from implementing
+polygon drawing routines ourselves.</p>
+<p>Two more lines of setup and we're ready to run our robot.</p>
+<pre><code class="language-python">rob_shape.color = 255, 0, 0  # make Rob red, RGB value
+window.set_visible(True)
+pyglet.app.run()  # start application loop
+</code></pre>
+
+<p>We make our window visible and start our application loop. If you get stuck, <kbd>ESC</kbd> exits the window.</p>
+<h3>Interaction</h3>
+<p>Now, although Rob is a masterpiece of robot design, and should probably be put in a contemporary art museum somewhere,
+you're probably wondering if you could make him do... something.... Anything really. Let's do just that.</p>
+<p>Before running your application, at the top add an import <code>from pyglet.window import key</code>,
+and add the following above <code>window.set_visible(True)</code>:</p>
+<pre><code class="language-python"># get access to system keyboard
+keyboard = key.KeyStateHandler()
+window.push_handlers(keyboard)
+
+# use keyboard to control Rob
+def process_user_input(dt):
+    speed = 0.6  # m/s
+    distance = speed * dt * M_TO_PIXELS  # m/s * s -&gt; pixels
+
+    # direction
+    if keyboard[key.RIGHT]:
+        rob_body.position += distance, 0
+    if keyboard[key.LEFT]:
+        rob_body.position -= distance, 0
+    if keyboard[key.UP]:
+        rob_body.position += 0, distance
+    if keyboard[key.DOWN]:
+        rob_body.position -= 0, distance
+
+# process input at regular interval
+pyglet.clock.schedule_interval(process_user_input, 1.0/60)  # 60Hz
+</code></pre>
+
+<p>This allows us to control Rob with the arrow keys on our keyboard.
+Just like we would with any hardware, we read and process its signal at a regular, fixed interval.
+Because <code>pyglet</code> cannot guarantee exact timing because of operating system restrictions,
+we take in a &Delta;<em>time</em> to know exactly how much time has passed since the last update.</p>
+<p>And there you have it. Running again gives you a real (simulated) robot (colored blob) that you can control!</p>
+<p>The complete code for this article can be found in the <a href="https://github.com/clintliddick/robotics_intro">https://github.com/clintliddick/robotics_intro</a> repository,
+and you can run the application with:</p>
+<pre><code class="language-bash">cd robotics_intro
+workon robotics_intro_env
+python -m roboticsintro.hellorobot.simple
+</code></pre>
+
+<h3>Wrapping Up</h3>
+<p>We've met our first robot, and learned a little about its composition in simulation space.
+In the next article, we'll consider rotation, and introduce the concept of <strong>configuration space</strong>.</p>
+<p class="text-right"><a href="/articles/intro-to-robotics-part-3"><strong>Next article</strong>: part 3</a></p>
+
+</div>
+
+
+
+    <!-- Begin page footer -->
+    <footer class="footer">
+      <div class="container-fluid">
+        <div class="text-muted">
+          <p>&copy; Copyright 2016 Clinton Liddick. All rights reserved.</p>
+          <p>Special thanks to <a href="http://getbootstrap.com">Bootstrap</a>
+            and <a href="http://glyphicons.com">Glyphicons</a>.</p>
+        </div>
+      </div>
+    </footer>
+    <!-- End page footer -->
+
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"
+            type="application/javascript"></script>
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"
+            type="application/javascript"></script>
+
+    <!-- LaTeX math formatting -->
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Config({
+        jax: ["input/TeX", "output/CommonHTML", "output/PlainSource"],
+        extensions: ["tex2jax.js"],
+        TeX: {
+          extensions: ["AMSmath.js", "AMSsymbols.js"]
+        }
+      });
+    </script>
+    <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js"
+            type="application/javascript"></script>
+
+    <!-- Code highlighting -->
+    <script type="application/javascript">
+      $("code").addClass("line-numbers")
+      $(".language-bash").removeClass("line-numbers").addClass("command-line")
+    </script>
+    <script src="/static/js/prism.min.js"
+            type="application/javascript"></script>
+
+    <!-- Google Analytics snippet -->
+    <script type="application/javascript">
+     (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+         (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+     m=s.getElementsByTagName(o)[0];
+     a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+     })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+     ga('create', 'UA-46719658-2', 'auto');
+     ga('send', 'pageview');
+
+    </script>
+  </body>
+</html>

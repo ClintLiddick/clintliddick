@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta Content-Type
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Intro to Robotics Programming: Part 1 | Clinton Liddick</title>
+
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css"
+          rel="stylesheet" type="text/css">
+    <link href="/static/css/prism.css" rel="stylesheet" type="text/css">
+    <link href="/static/css/style.css" rel="stylesheet" type="text/css">
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+
+    <!-- Begin site header -->
+    <header>
+      <nav class="navbar navbar-inverse navbar-static-top" role="navigation">
+        <div class="container-fluid">
+          <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed"
+                    data-toggle="collapse" data-target=".navbar-collapse">
+              <span class="sr-only">Toggle navigation</span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">
+              Clinton Liddick <small>Technology is for Humans</small></a>
+          </div>
+          <div class="navbar-collapse collapse">
+            <ul class="nav navbar-nav">
+              
+              <li >
+                <a href="/">Home</a>
+              </li>
+              
+              <li >
+                <a href="/about/">About</a>
+              </li>
+              
+              <li class="active">
+                <a href="/articles/">Articles</a>
+              </li>
+              
+              <li >
+                <a href="/projects/">Projects</a>
+              </li>
+              
+              <li >
+                <a href="/contact/">Contact</a>
+              </li>
+              
+            </ul>
+            <!-- <form class="navbar-form navbar-right" role="search" action="">
+                 <div class="form-group has-feedback">
+                 <input type="text" class="form-control" placeholder="Search" />
+                 <span class="glyphicon glyphicon-search form-control-feedback"></span>
+                 </div>
+                 </form> -->
+          </div>
+        </div>
+      </nav>
+    </header>
+    <!-- End site header -->
+
+    
+
+<div class="container">
+
+  <div class="row">
+    <div class="col-xs-12">
+      <div class="page-header">
+        <h1>Intro to Robotics Programming: Part 1</h1>
+      </div>
+      <h3><small>Posted: March 19, 2016</small></h3>
+      <br>
+    </div>
+  </div>
+
+  <h3>Introduction to the Series</h3>
+<p>Robots are awesome. But robotics as a discipline is both broad and deep, and without guidance it's
+almost impossible to know where to get started.
+I'm often asked how best to get started with robotics, so throughout this series of articles,
+I will introduce you to the world of robotics programming.
+We will use Python for simplicity, and work in pure simulation to learn the concepts and techniques that give
+robots the ability to do all the amazing things that they do.
+Many of the topics will be difficult, but I'll try to keep the explanations clear and intuitive,
+and the examples interesting.</p>
+<h3>Components of a Robotics Software System</h3>
+<p>A robotic system is composed of many layers, all coordinated to enable the robot to accomplish some task in the physical world.
+We will look at these layers one by one to build up a simple but functional robotic system. But first, let's look at an overview.</p>
+<h4>Physical Objects</h4>
+<!-- <div class="row"><div class="col-xs-4 col-sm-2"><img src="http://openclipart.org/download/3738/chris-sharkot-ball.svg" -->
+
+<!--      class="img-responsive" alt="Sphere" width="100%"></div></div> -->
+
+<p>Robots, walls, bottles, and and other objects all have physical properties that make them what they are.
+Roboticists usually employ <a href="https://en.wikipedia.org/wiki/Rigid_body_dynamics">Rigid Body Dynamics</a> to model objects
+and their interactions.
+What this means is objects are considered inflexible (no bending or soft objects), and we can describe their behavior as
+an exact and straightforward function of time.
+In these articles, we will mostly be concerned with the <a href="https://en.wikipedia.org/wiki/Kinematics">kinematics</a> of objects,
+rather than their dynamics.
+In other words, shape rather than mass and mass distribution.</p>
+<h4>World/Environment/Simulation Space</h4>
+<p>You have to represent your robot and other physical objects in software. You'll need to plan movements, and may want to "try out" a movement in simulation before
+committing your expensive robot to a potentially dangerous action. We call this representation the world or environment.
+The most important function of the world is to maintain a mapping of all objects and their locations in some
+<a href="https://en.wikipedia.org/wiki/Frame_of_reference">frame of reference</a>.</p>
+<p>The simulation could be as simple as a list of objects and properties along with some simple functions, up to a full blown physics simulator.
+We shall see many ways to represent and use the simulated environment.</p>
+<h4>Collision Detection</h4>
+<p>The main use of the simulation environment is collision detection. You don't want to break your expensive robot,
+so you need a way of predicting that you may hit something.
+The great the number and more complex the objects involved the more difficult this becomes.
+In real robotic simulations and planning, collision detection often accounts for over 90% of the computation time.
+We will look at some simple collision detection techniques for 2D objects, and rely on libraries for more complex tasks.</p>
+<h4>Planning</h4>
+<p>Once we have a way to simulate actions, we can make plans for how to accomplish our goal.
+Finding a path to drive from <code>start</code> to <code>goal</code> is like solving a maze, generally involving clever graph search algorithms.
+This becomes even more complicated when we try to grasp objects or position our hand, requiring solving some very
+difficult equations or optimization problems, as well as searching through very high dimensional <strong>configuration spaces</strong>
+that include the position of every object and every joint in the world.</p>
+<h4>Perception</h4>
+<p>Humans take for granted that we can identify objects in the world, but we've had millions of years of biological
+evolution to get it right.
+How can a robot identify whether it is looking at a a fork or a spoon? Or a picture of a spoon?
+How does a robot know where it is in the world?
+We could tell it explicitly, but at some point you probably want your robot to figure this out on its own.
+We will look at how robotic perception systems work, and what kinds of sensors they use.
+We will briefly review the field of computer vision, and use libraries to process image data for useful information.</p>
+<h4>Execution</h4>
+<p>Simulation is all well and good, but eventually you probably want to see your robot move.
+We will look at the field of control theory, and implement the simplest and most common kind of controller
+<strong>in simulation</strong>! Wait, what? Trust me, we'll get there.</p>
+<h4>Visualization</h4>
+<p>Finally, because our weak human brains have trouble with all the crazy math required to represent the mechanics of movement,
+we will want to visualize our environment and many of our planners.
+We'll use a simple graphics library to let us see exactly what is going on as we simulate our robot.</p>
+<h4>Advanced Integration</h4>
+<p>Once we've mastered the basic techniques, we'll have uncovered the enormous complexity of robotics.
+At that point, we probably won't want to keep writing our own glue code and wrappers for every single
+thing we want to accomplish, and we'd like the help of high quality libraries wherever we can.
+So I'll introduce ROS (<a href="http://www.ros.org/">Robot Operating System</a>), a framework for robotics platforms with
+many many libraries targeting it, and recommend some more powerful libraries and frameworks for you to continue your journey.</p>
+<h3>What We Won't Cover</h3>
+<p>Despite the long list of topics above, we're still only going to scratch the surface of robotics technology.
+But perhaps most notably, I won't be talking about any hardware programming.
+Embedded systems are very interesting to program, but there are now many resources dedicated to
+embedded programming thanks to the popularity of platforms such as Raspberry Pi, Arduino, and BeagleBone.</p>
+<h3>Getting Started</h3>
+<p>There are some prerequisites for this course. First, robotics happens on Linux. We're starting small with
+Python and some popular open source libraries, so although I cannot guarantee the
+instructions or code provided here will work on anything but the latest Ubuntu LTS (14.04 Trusty Tahr at the time of this writing),
+it is possible that the code may run on OSX or Windows.
+However, if you don't have Linux, I recommend you setup an Ubuntu virtual machine using <a href="https://www.virtualbox.org/">VirtualBox</a>
+or another VM of your choice.</p>
+<p>We will primarily be using Python, so while you may pick it up from these articles, I'm not concerned with teaching it.
+I will assume good working knowledge of the language, and focus on the robotics.
+Later, we will introduce some C++ where it may be beneficial to future learning.</p>
+<p>Finally, all the code for these articles is available at <a href="https://github.com/clintliddick/robotics_intro">https://github.com/clintliddick/robotics_intro</a>.
+Each article will mention if there is something you should attempt yourself before looking into the source for answers.</p>
+<h3>Wrapping Up</h3>
+<p>Hopefully this has piqued your interest, and you're excited to see some code and play with a robot.
+In the next article, we'll jump right in with an overview of the software and general application structure we'll be using,
+and we'll build our first robot.</p>
+<p class="text-right"><a href="/articles/intro-to-robotics-part-2/"><strong>Next article</strong>: Part 2</a></p>
+
+</div>
+
+
+
+    <!-- Begin page footer -->
+    <footer class="footer">
+      <div class="container-fluid">
+        <div class="text-muted">
+          <p>&copy; Copyright 2016 Clinton Liddick. All rights reserved.</p>
+          <p>Special thanks to <a href="http://getbootstrap.com">Bootstrap</a>
+            and <a href="http://glyphicons.com">Glyphicons</a>.</p>
+        </div>
+      </div>
+    </footer>
+    <!-- End page footer -->
+
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"
+            type="application/javascript"></script>
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"
+            type="application/javascript"></script>
+
+    <!-- LaTeX math formatting -->
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Config({
+        jax: ["input/TeX", "output/CommonHTML", "output/PlainSource"],
+        extensions: ["tex2jax.js"],
+        TeX: {
+          extensions: ["AMSmath.js", "AMSsymbols.js"]
+        }
+      });
+    </script>
+    <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js"
+            type="application/javascript"></script>
+
+    <!-- Code highlighting -->
+    <script type="application/javascript">
+      $("code").addClass("line-numbers")
+      $(".language-bash").removeClass("line-numbers").addClass("command-line")
+    </script>
+    <script src="/static/js/prism.min.js"
+            type="application/javascript"></script>
+
+    <!-- Google Analytics snippet -->
+    <script type="application/javascript">
+     (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+         (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+     m=s.getElementsByTagName(o)[0];
+     a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+     })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+     ga('create', 'UA-46719658-2', 'auto');
+     ga('send', 'pageview');
+
+    </script>
+  </body>
+</html>
